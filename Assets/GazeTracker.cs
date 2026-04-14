@@ -44,7 +44,7 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
         public string pointId; // ID do ponto de foco que foi olhado
         public string category; // Categoria do ponto de foco
         public string eventType; // Tipo do evento: session_start, enter, exit, session_end
-        public float durationMs; // Tempo em milissegundos que o usuário ficou olhando
+        public float durationSeconds; // Tempo em segundos que o usuário ficou olhando
     }
 
     private void Start()
@@ -126,12 +126,12 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
     {
         if (currentPoint == null) return; // Se não estiver olhando para nada, não faz nada
 
-        float durationMs = (Time.unscaledTime - currentEnterTime) * 1000f; // Calcula quanto tempo ficou olhando
-        AddEvent("exit", currentPoint, durationMs); // Registra o evento de saída com a duração
+        float durationSeconds = (Time.unscaledTime - currentEnterTime); // Calcula quanto tempo o usuário ficou olhando para o ponto atual (em segundos)
+        AddEvent("exit", currentPoint, durationSeconds); // Registra o evento de saída com a duração
         currentPoint = null; // Limpa o ponto atual
     }
 
-    private void AddEvent(string eventType, FocusPoints point, float durationMs)
+    private void AddEvent(string eventType, FocusPoints point, float durationSeconds)
     {
         if (sessionData == null) // Se a sessão ainda não foi criada...
             return; // ...não salva nada
@@ -142,7 +142,7 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
             pointId = point != null ? point.pointId : "", // Se existir ponto, salva o ID; senão, deixa vazio
             category = point != null ? point.category : "", // Se existir ponto, salva a categoria; senão, vazio
             eventType = eventType, // Salva o tipo do evento
-            durationMs = durationMs // Salva a duração
+            durationSeconds = durationSeconds // Salva a duração
         });
     }
 

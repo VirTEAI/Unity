@@ -6,6 +6,8 @@ using System.Collections; // Importa a biblioteca para usar corrotinas
 
 public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser colocado em um objeto da cena
 {
+    public PT_MouseLook mouseLook; // Referência para o script que controla o olhar do jogador, usado para travar a câmera enquanto a UI estiver aberta
+
     [Header("UI")] // Só serve para organizar os campos no Inspector da Unity
     public TMP_InputField sessionInput; // Campo onde o usuário vai digitar o ID da sessão
     public Button startButton; // Botão que o usuário vai clicar para iniciar
@@ -19,6 +21,8 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
     private void Start() // Função que roda uma vez quando o objeto começa a funcionar
     {
         freezeScript.freeze = true; // Faz a câmera ficar travada enquanto a tela de início está aberta
+
+        mouseLook.DisableLook(); // Desativa o controle de olhar para evitar que o usuário possa olhar ao redor enquanto a UI estiver ativa
 
         startButton.onClick.AddListener(OnStartClicked); 
         // Diz ao botão para chamar a função OnStartClicked quando ele for clicado
@@ -40,9 +44,7 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
             return; // Para a função aqui, sem iniciar a sessão
         }
 
-        StartCoroutine(ValidateSession(sessionId));
-
-        
+        StartCoroutine(ValidateSession(sessionId)); // Inicia uma corrotina para validar o ID da sessão, que é uma função que pode esperar por respostas sem travar o jogo
     }
 
     IEnumerator ValidateSession(string sessionId)
@@ -79,6 +81,8 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
         gazeTracker.BeginSession(sessionId); // Envia o ID digitado para o GazeTracker, que vai começar a registrar os dados
 
         freezeScript.Unlock(); // Destrava a câmera para que o usuário possa se mover e olhar ao redor
+
+        mouseLook.EnableLook(); // Reativa o controle de olhar para que o usuário possa olhar ao redor
 
         if (panelRoot != null) // Se o painel existir...
             panelRoot.SetActive(false); // ...esconde a interface da tela inicial
