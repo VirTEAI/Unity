@@ -4,6 +4,11 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Polytope Studio/Lowpoly_Demos/Environment_Free/Environment_Free.unity
+    guid: c732593fe76e5a84197f9cd13963f706
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 289c1b55c9541489481df5cc06664110, type: 3}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 8dc7426f2a8bcad9083f037983c9dfe1, type: 2}
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 926cb5aba60d2c2228d2763f285f2cfd, type: 2}

@@ -18,6 +18,12 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
 
     public FreezeTransform freezeScript; // Referência para o script que trava a câmera enquanto a UI estiver aberta
 
+    [System.Serializable] // Permite que a classe seja editada no Inspector
+    public class SessionResponse // Classe para representar a resposta da API
+    {
+        public bool valid; // Campo que indica se a sessão é válida ou não, de acordo com a resposta da API
+    }
+
     private void Start() // Função que roda uma vez quando o objeto começa a funcionar
     {
         freezeScript.freeze = true; // Faz a câmera ficar travada enquanto a tela de início está aberta
@@ -49,7 +55,7 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
 
     IEnumerator ValidateSession(string sessionId)
     {
-        string url = "https://virteai-backend-tcc.onrender.com/sessions/get-id/" + sessionId; // URL do endpoint de validação de sessão
+        string url = "https://virteai-backend-tcc.onrender.com/sessions/" + sessionId; // URL do endpoint de validação de sessão
 
         using (UnityWebRequest request = UnityWebRequest.Get(url)) // Cria uma requisição GET para a URL
         {
@@ -62,7 +68,9 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
             }
 
             string responseText = request.downloadHandler.text; // Obtém o texto da resposta
-            bool exists = responseText == "true"; // Verifica se a resposta indica que a sessão existe
+            SessionResponse response = JsonUtility.FromJson<SessionResponse>(responseText); // Converte o texto JSON em um objeto da classe SessionResponse
+
+            bool exists = response.valid; // Verifica se a sessão é válida de acordo com a resposta da API
 
             if (exists)
             {
