@@ -16,7 +16,11 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
     [Header("Game")] // Organização visual no Inspector
     public GazeTracker gazeTracker; // Referência para o script que vai registrar o olhar do usuário
 
-    public FreezeTransform freezeScript; // Referência para o script que trava a câmera enquanto a UI estiver aberta
+    // public FreezeTransform freezeScript; // Referência para o script que trava a câmera enquanto a UI estiver aberta
+
+     // Lista de componentes que devem ser desativados durante o loading.
+    // Exemplo: locomotion, input, interações da porta, etc.
+    [SerializeField] private Behaviour[] disableWhileLoading;
 
     [System.Serializable] // Permite que a classe seja editada no Inspector
     public class SessionResponse // Classe para representar a resposta da API
@@ -26,9 +30,16 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
 
     private void Start() // Função que roda uma vez quando o objeto começa a funcionar
     {
-        freezeScript.freeze = true; // Faz a câmera ficar travada enquanto a tela de início está aberta
+        // freezeScript.freeze = true; // Faz a câmera ficar travada enquanto a tela de início está aberta
 
-        mouseLook.DisableLook(); // Desativa o controle de olhar para evitar que o usuário possa olhar ao redor enquanto a UI estiver ativa
+        // mouseLook.DisableLook(); // Desativa o controle de olhar para evitar que o usuário possa olhar ao redor enquanto a UI estiver ativa
+
+        // Desativa controles, interações ou qualquer coisa que não deva funcionar durante o carregamento.
+        foreach (var b in disableWhileLoading)
+        {
+            if (b != null)
+                b.enabled = false;
+        }
 
         startButton.onClick.AddListener(OnStartClicked); 
         // Diz ao botão para chamar a função OnStartClicked quando ele for clicado
@@ -88,9 +99,16 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
     {
         gazeTracker.BeginSession(sessionId); // Envia o ID digitado para o GazeTracker, que vai começar a registrar os dados
 
-        freezeScript.Unlock(); // Destrava a câmera para que o usuário possa se mover e olhar ao redor
+        // freezeScript.Unlock(); // Destrava a câmera para que o usuário possa se mover e olhar ao redor
 
-        mouseLook.EnableLook(); // Reativa o controle de olhar para que o usuário possa olhar ao redor
+        // mouseLook.EnableLook(); // Reativa o controle de olhar para que o usuário possa olhar ao redor
+
+        // Reativa controles, interações ou qualquer coisa que foi desativada.
+        foreach (var b in disableWhileLoading)
+        {
+            if (b != null)
+                b.enabled = true;
+        }
 
         if (panelRoot != null) // Se o painel existir...
             panelRoot.SetActive(false); // ...esconde a interface da tela inicial

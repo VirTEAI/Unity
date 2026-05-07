@@ -116,6 +116,13 @@ public class TransitionManager : MonoBehaviour
 
         // Libera novas ações.
         isTransitioning = false;
+
+        // Reativa controles, interações ou qualquer coisa que foi desativada.
+        foreach (var b in disableWhileLoading)
+        {
+            if (b != null)
+                b.enabled = true;
+        }
     }
 
     // Mostra a tela de loading.
