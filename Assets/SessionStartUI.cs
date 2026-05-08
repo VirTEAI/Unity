@@ -18,9 +18,11 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
 
     // public FreezeTransform freezeScript; // Referência para o script que trava a câmera enquanto a UI estiver aberta
 
-     // Lista de componentes que devem ser desativados durante o loading.
+    // Lista de componentes que devem ser desativados durante o loading.
     // Exemplo: locomotion, input, interações da porta, etc.
     [SerializeField] private Behaviour[] disableWhileLoading;
+
+    [SerializeField] private GameObject xrNumberPad; // Referência para o teclado numérico XR, que pode ser ativado para a digitação do ID da sessão em VR
 
     [System.Serializable] // Permite que a classe seja editada no Inspector
     public class SessionResponse // Classe para representar a resposta da API
@@ -41,8 +43,19 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
                 b.enabled = false;
         }
 
+        sessionInput.onValueChanged.AddListener(LimitCharacters);
+        // Diz ao campo de input para chamar a função LimitCharacters toda vez que o texto for alterado
+
         startButton.onClick.AddListener(OnStartClicked); 
         // Diz ao botão para chamar a função OnStartClicked quando ele for clicado
+    }
+
+    private void LimitCharacters(string text) // Função para limitar o número de caracteres que o usuário pode digitar no campo de input, garantindo que o ID da sessão tenha no máximo 6 caracteres
+    {
+        if (text.Length > 6)
+        {
+            sessionInput.text = text.Substring(0, 6);
+        }
     }
 
     private void OnDestroy() // Função chamada quando o objeto é destruído ou a cena é encerrada
@@ -53,6 +66,9 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
 
     private void OnStartClicked() // Função executada quando o botão "Start" é clicado
     {
+        if (xrNumberPad != null) // Verifica se o teclado numérico XR foi atribuído no Inspector
+            xrNumberPad.SetActive(false); // Esconde o teclado numérico, caso esteja ativo, para mostrar a interface normal
+
         string sessionId = sessionInput.text.Trim(); // Pega o texto digitado no campo e remove espaços no começo e no fim
 
         if (string.IsNullOrEmpty(sessionId)) // Verifica se o campo está vazio ou sem conteúdo válido
@@ -62,6 +78,12 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
         }
 
         StartCoroutine(ValidateSession(sessionId)); // Inicia uma corrotina para validar o ID da sessão, que é uma função que pode esperar por respostas sem travar o jogo
+    }
+
+    public void ShowKeyboard() // Função pública que pode ser chamada para mostrar o teclado numérico XR
+    {
+        if (xrNumberPad != null)
+            xrNumberPad.SetActive(true);
     }
 
     IEnumerator ValidateSession(string sessionId)
