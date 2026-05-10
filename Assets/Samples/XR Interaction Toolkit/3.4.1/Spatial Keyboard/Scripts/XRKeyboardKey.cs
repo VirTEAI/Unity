@@ -307,6 +307,12 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
                 m_Keyboard.PostprocessKeyPress(this);
             }
 
+            // Close the keyboard when enter is pressed
+            if (m_Keyboard != null && (m_KeyCode == KeyCode.Return || m_KeyCode == KeyCode.KeypadEnter))
+            {
+                m_Keyboard.Close();
+            }
+
             m_LastClickTime = Time.time;
         }
 
