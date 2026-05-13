@@ -43,19 +43,23 @@ public class SessionStartUI : MonoBehaviour // Cria um componente que pode ser c
                 b.enabled = false;
         }
 
-        sessionInput.onValueChanged.AddListener(LimitCharacters);
-        // Diz ao campo de input para chamar a função LimitCharacters toda vez que o texto for alterado
+        sessionInput.characterLimit = 6; // Limita o campo de texto para no máximo 6 caracteres, já que os IDs de sessão têm 6 dígitos
+        sessionInput.contentType = TMP_InputField.ContentType.IntegerNumber; // Configura o campo para aceitar apenas números inteiros, já que os IDs de sessão são numéricos
+        sessionInput.onValidateInput += ValidateDigit; // Adiciona uma função de validação personalizada para garantir que apenas dígitos sejam inseridos e que o limite de caracteres seja respeitado
 
         startButton.onClick.AddListener(OnStartClicked); 
         // Diz ao botão para chamar a função OnStartClicked quando ele for clicado
     }
 
-    private void LimitCharacters(string text) // Função para limitar o número de caracteres que o usuário pode digitar no campo de input, garantindo que o ID da sessão tenha no máximo 6 caracteres
+    private char ValidateDigit(string text, int charIndex, char addedChar) // Função de validação personalizada para o campo de texto, que é chamada toda vez que o usuário tenta adicionar um caractere
     {
-        if (text.Length > 6)
-        {
-            sessionInput.text = text.Substring(0, 6);
-        }
+        if (!char.IsDigit(addedChar)) // Verifica se o caractere adicionado não é um dígito (0-9) 
+            return '\0'; // Se não for um dígito, retorna um caractere nulo, o que impede que ele seja adicionado ao campo de texto
+
+        if (text.Length >= 6) // Verifica se o texto já atingiu o limite de 6 caracteres
+            return '\0'; // Se não for um dígito, retorna um caractere nulo, o que impede que ele seja adicionado ao campo de texto
+
+        return addedChar;
     }
 
     private void OnDestroy() // Função chamada quando o objeto é destruído ou a cena é encerrada

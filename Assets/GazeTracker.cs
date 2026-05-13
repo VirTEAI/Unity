@@ -6,6 +6,17 @@ using System.Text; // Permite usar StringBuilder para construir strings de forma
 using UnityEngine; // Importa as funções principais da Unity
 using UnityEngine.Networking; // Permite fazer requisições web, como validar o ID da sessão
 
+
+
+
+
+
+using TMPro;
+
+
+
+
+
 public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar a leitura do olhar
 {
     [Header("References")]
@@ -81,6 +92,14 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
 
         nextSampleTime = Time.time + sampleInterval; // Define quando será a próxima leitura
         SampleGaze(); // Faz a leitura do que está sendo olhado
+
+
+
+
+
+
+
+        UpdateGazeDebugUI(); // Atualiza o UI de debug para mostrar o ponto atual e o tempo olhando para ele
     }
 
     private void SampleGaze()
@@ -113,6 +132,45 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
         }
     }
 
+
+
+
+
+
+
+
+    // Está sessão toda é para mostrar no UI de debug qual ponto está sendo olhado e há quanto tempo, para ajudar no desenvolvimento
+    [Header("Debug UI")]
+    [SerializeField] private GameObject gazeDebugPanel;
+    [SerializeField] private TMP_Text gazeDebugText;
+
+    private void UpdateGazeDebugUI()
+    {
+        if (gazeDebugPanel == null || gazeDebugText == null)
+            return;
+
+        if (currentPoint == null)
+        {
+            gazeDebugPanel.SetActive(false);
+            return;
+        }
+
+        float duration = Time.unscaledTime - currentEnterTime;
+
+        gazeDebugPanel.SetActive(true);
+        gazeDebugText.text =
+            $"Looking at: {currentPoint.pointId}\n" +
+            $"Category: {currentPoint.category}\n" +
+            $"Time: {duration:0.00}s";
+    }
+
+
+
+
+
+
+
+
     private void StartNewPoint(FocusPoints point)
     {
         if (point == null) return; // Se não tiver ponto, não faz nada
@@ -120,6 +178,18 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
         currentPoint = point; // Guarda qual ponto passou a ser olhado
         currentEnterTime = Time.unscaledTime; // Marca o tempo de entrada nesse ponto
         AddEvent("enter", point, 0f); // Registra o evento de entrada
+
+
+
+
+
+
+
+        // Ativa o painel de debug e mostra as informações do ponto atual
+        if (gazeDebugPanel != null)
+        gazeDebugPanel.SetActive(true);
+
+        UpdateGazeDebugUI();
     }
 
     private void EndCurrentPoint()
@@ -129,6 +199,17 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
         float durationSeconds = (Time.unscaledTime - currentEnterTime); // Calcula quanto tempo o usuário ficou olhando para o ponto atual (em segundos)
         AddEvent("exit", currentPoint, durationSeconds); // Registra o evento de saída com a duração
         currentPoint = null; // Limpa o ponto atual
+
+
+
+
+
+
+
+
+
+        if (gazeDebugPanel != null)
+            gazeDebugPanel.SetActive(false); // Esconde o painel de debug quando não estiver olhando para nenhum ponto
     }
 
     private void AddEvent(string eventType, FocusPoints point, float durationSeconds)
@@ -155,19 +236,57 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
 
         using (UnityWebRequest request = new UnityWebRequest(postUrl, "POST")) // Cria uma requisição POST para a URL definida
         {
+            request.timeout = 10; // Define um tempo limite para a requisição (em segundos)
             request.uploadHandler = new UploadHandlerRaw(bodyRaw); // Define o corpo da requisição com os dados JSON
             request.downloadHandler = new DownloadHandlerBuffer(); // Define um handler para receber a resposta
             request.SetRequestHeader("Content-Type", "application/json"); // Define o header para indicar que o corpo é JSON
 
             yield return request.SendWebRequest(); // Envia a requisição e espera pela resposta
 
+
+
+
+
+
+
+
+            // Mostra na Ui de Debug a resposta do servidor, para ajudar no desenvolvimento e ver se deu certo
+            gazeDebugPanel.SetActive(true);
+            gazeDebugText.text = "Mandando dados para o servidor...\n";
+
+
+
+
+
+
+
+
             if (request.result != UnityWebRequest.Result.Success) // Se a requisição falhou...
             {
-                Debug.LogError("Failed to send session data: " + request.error); // Mostra o erro no Console
-                Debug.LogError("Response: " + request.downloadHandler.text); // Mostra a resposta do servidor, que pode conter detalhes do erro
+                // Debug.LogError("Failed to send session data: " + request.error); // Mostra o erro no Console
+                // Debug.LogError("Response: " + request.downloadHandler.text); // Mostra a resposta do servidor, que pode conter detalhes do erro
+
+
+
+
+
+
+
+                gazeDebugText.text += "Erro ao enviar dados:\n" + request.error + "\nResposta: " + request.downloadHandler.text; // Mostra o erro e a resposta do servidor na UI de debug
+                yield break; // Sai da função
             }
 
-            Debug.Log("Session data sent successfully! Response: " + request.downloadHandler.text); // Mostra a resposta do servidor
+            // Debug.Log("Session data sent successfully! Response: " + request.downloadHandler.text); // Mostra a resposta do servidor
+
+
+
+
+
+
+
+
+
+            gazeDebugText.text += "Dados enviados com sucesso!\nResposta: " + request.downloadHandler.text; // Mostra a resposta do servidor na UI de debug
         }
     }
 
@@ -181,15 +300,15 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
     //     Debug.Log("Saved JSON to: " + jsonPath); // Mostra no Console onde salvou
     // }
 
-    private void FinishSessionAndSend()
+    private IEnumerator FinishSessionAndSend()
     {
-        if (!sessionStarted) return; // Se a sessão nem chegou a começar, não faz nada
+        if (!sessionStarted) yield break; // Se a sessão nem chegou a começar, não faz nada
 
         EndCurrentPoint(); // Finaliza qualquer ponto que ainda esteja em andamento
         AddEvent("session_end", null, 0f); // Registra o fim da sessão
-
-        StartCoroutine(SendSessionToBackend()); // Envia os dados para o backend
         sessionStarted = false; // Marca que a sessão terminou para evitar novas leituras ou envios
+
+        yield return StartCoroutine(SendSessionToBackend()); // Envia os dados para o backend
 
         // SaveJson(); // Salva o arquivo JSON no disco
     }
@@ -201,15 +320,20 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
 
     private IEnumerator EndSessionAndExitRoutine() // Corrotina para finalizar a sessão, enviar os dados e depois fechar o aplicativo
     {
-        FinishSessionAndSend(); // Finaliza a sessão e inicia o envio dos dados
+        yield return StartCoroutine(FinishSessionAndSend()); // Finaliza a sessão e inicia o envio dos dados
 
-        yield return new WaitForSeconds(1f); // Espera um pouco para garantir que a requisição seja enviada antes de fechar o aplicativo (ajuste esse tempo se necessário)
+        // when finishsessionandsend finished, turn the object red
+        GetComponent<Renderer>().material.color = Color.red;
+
+        // yield return new WaitForSeconds(1f); // Espera um pouco para garantir que a requisição seja enviada antes de fechar o aplicativo (ajuste esse tempo se necessário)
 
     #if UNITY_ANDROID && !UNITY_EDITOR // Se for Android e não estiver no Editor, em vez de fechar o aplicativo, manda ele para segundo plano para evitar problemas com o envio dos dados
-        using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-        using (AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+        // using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        // using (AndroidJavaObject activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
         {
-            activity.Call<bool>("moveTaskToBack", true);
+            // activity.Call<bool>("moveTaskToBack", true);
+            // Application.runInBackground = true; // Permite que o aplicativo continue rodando em segundo plano para garantir que a requisição seja enviada
+            Application.Quit(); // Tenta fechar o aplicativo, mas no Android isso não funciona, então ele vai para segundo plano
         }
     #else
         Application.Quit(); // Para outras plataformas, fecha o aplicativo normalmente
@@ -218,6 +342,6 @@ public class GazeTracker : MonoBehaviour // Cria um componente que vai controlar
 
     public void ForceSave()
     {
-        FinishSessionAndSend(); // Função pública para forçar o envio dos dados, pode ser chamada por outros scripts se necessário
+        StartCoroutine(FinishSessionAndSend()); // Função pública para forçar o envio dos dados, pode ser chamada por outros scripts se necessário
     }
 }
